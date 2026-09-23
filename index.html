@@ -132,6 +132,7 @@ var WAKE_LOCK_PREF='agnes_wakelock_enabled';
 var MAX_IMAGE_SIZE=12*1024*1024;
 var THUMBNAIL_MAX_WIDTH=200;
 var toastTimeout=null;
+
 function showToast(msg,type,dur){
 type=type||'success';dur=dur||2500;
 var t=document.getElementById('toast');
@@ -148,10 +149,12 @@ requestAnimationFrame(function(){t.classList.add('visible');});
 if(toastTimeout)clearTimeout(toastTimeout);
 toastTimeout=setTimeout(function(){t.classList.remove('visible');},dur);
 }
+
 var wakeLockSentinel=null;
 var wakeLockEnabled=false;
 var canvasStream=null;
 var canvasInterval=null;
+
 function isWakeLockSupported(){return 'wakeLock' in navigator&&typeof navigator.wakeLock.request==='function';}
 function requestWakeLockAPI(){if(!isWakeLockSupported())return Promise.resolve(false);return navigator.wakeLock.request('screen').then(function(s){wakeLockSentinel=s;s.addEventListener('release',function(){wakeLockSentinel=null;updateWakeStatus();});return true;}).catch(function(){return false;});}
 function releaseWakeLockAPI(){if(wakeLockSentinel){try{wakeLockSentinel.release();}catch(e){}wakeLockSentinel=null;}return Promise.resolve();}
@@ -161,11 +164,13 @@ function activateWakeLock(){var p=Promise.resolve(false);if(isWakeLockSupported(
 function deactivateWakeLock(){return releaseWakeLockAPI().then(function(){stopCanvasStream();});}
 function updateWakeStatus(){var el=document.getElementById('wake-status');var txt=document.getElementById('wake-status-text');var btn=document.getElementById('wake-toggle-btn');if(!el||!txt||!btn)return;el.classList.remove('active','warn');var c=document.getElementById('noSleepCanvas');var has=isWakeLockSupported()||(c&&c.captureStream);if(!has){el.classList.add('warn');txt.textContent='Non supporte';btn.style.display='none';return;}btn.style.display='inline-block';var act=wakeLockSentinel!==null||canvasStream!==null;if(wakeLockEnabled&&act){el.classList.add('active');txt.textContent='Ecran reste allume';btn.textContent='Desactiver';}else if(wakeLockEnabled&&!act){el.classList.add('warn');txt.textContent='En attente';btn.textContent='Desactiver';}else{txt.textContent='Veille automatique';btn.textContent='Garder l ecran allume';}}
 function toggleWakeLock(){if(wakeLockEnabled){wakeLockEnabled=false;deactivateWakeLock().then(function(){try{localStorage.setItem(WAKE_LOCK_PREF,'0');}catch(e){}showToast('Veille reactivee','warn');updateWakeStatus();});}else{wakeLockEnabled=true;activateWakeLock().then(function(ok){try{localStorage.setItem(WAKE_LOCK_PREF,'1');}catch(e){}showToast(ok?'Ecran reste allume':'Activez manuellement',ok?'success':'warn');updateWakeStatus();});}}
+
 function loadTimingCache(){try{return JSON.parse(localStorage.getItem(TIMING_CACHE_KEY)||'{}');}catch(e){return{};}}
 function saveTimingCache(c){try{localStorage.setItem(TIMING_CACHE_KEY,JSON.stringify(c));}catch(e){}}
 function recordGenerationTime(n,d){var c=loadTimingCache();var k=String(n);if(!c[k])c[k]=[];c[k].push(d);if(c[k].length>10)c[k]=c[k].slice(-10);saveTimingCache(c);updateTimingDisplay();}
 function estimateGenerationTime(n){var c=loadTimingCache();var s=c[String(n)];if(s&&s.length>0){var sorted=s.slice().sort(function(a,b){return a-b;});var m=Math.floor(sorted.length/2);return sorted.length%2===0?(sorted[m-1]+sorted[m])/2:sorted[m];}return 30000+n*500;}
 function updateTimingDisplay(){var c=loadTimingCache();var all=[];for(var k in c)if(c.hasOwnProperty(k))all=all.concat(c[k]);var s=document.getElementById('stat-speed');var n=document.getElementById('stat-samples');if(!s||!n)return;if(all.length===0){s.textContent='en attente';n.textContent='0 generation';return;}var avg=all.reduce(function(a,b){return a+b;},0)/all.length;s.textContent=(avg/1000).toFixed(1)+' s en moyenne';n.textContent=all.length+' generation'+(all.length>1?'s':'');}
+
 var PROMPT_PRESETS=[
 {label:'Vent leger',text:'brise legere dans les feuilles'},
 {label:'Golden hour',text:'lumiere doree de fin de journee'},
@@ -174,46 +179,129 @@ var PROMPT_PRESETS=[
 {label:'Ocean',text:'vagues calmes, reflets argentes'},
 {label:'Espace',text:'rotation tres lente des planetes'}
 ];
-function buildSystemPrompt(){return 'Animate this exact image as the starting frame. The subject must remain IDENTICAL to the input image: same composition, same proportions, same shapes, same colors, same textures, same lighting, same atmosphere, same elements. This is a CONTINUATION of the source image, not a re imagination. Add only a subtle cinematic camera movement: slow dolly in, or very slow lateral move, or parallax depth move, or gentle orbital move, or progressive reveal of depth. Animate ONLY naturally present elements: trees and leaves move gently in the wind, grass and vegetation react subtly, water and waves have natural continuous motion, fish and sea animals move realistically, clouds drift slowly, mist and atmospheric particles evolve naturally, mountains and rocks stay stable with subtle parallax, planets can have extremely slow rotation, stars and cosmic elements have very slight motion. Do not exaggerate. Do not deform, stretch, liquefy, or transform objects. Do not introduce new objects, animals, buildings, mountains, planets, or elements. Do not change structure or identity. Avoid deformation, shape changing, appearing or disappearing elements, abrupt movements, artificial or robotic motion, flickering between frames, sudden light or color variations, AI artifacts, inconsistencies between frames. The scene must remain perfectly coherent and stable throughout. Enhance visual quality significantly: photorealistic extremely detailed rendering, fine sharp textures, precise details, excellent definition, realistic light, natural shadows, realistic reflections, credible atmospheric depth, excellent contrast management, subtle cinematic depth of field, realistic motion blur, natural volumetric light when appropriate. Result should feel like very high resolution near 4K, exceptional detail, natural photographic look. Cinematic high end aesthetic, elegant, refined, sophisticated. Impression of luxury, grandeur, visual richness, beauty, calm, immersion. Premium cinematic production feel, high end nature documentary or luxury advertising. Avoid excessive saturation, artificial or fantasy rendering unless present in the original. The image must stay natural, realistic, credible. Principle: animate the image, do not recreate it.';}
-function buildUserPrompt(){var p=document.getElementById('main-prompt');var base=p?p.value.trim():'';var parts=[buildSystemPrompt()];if(base)parts.push('Additional direction: '+base);parts.push('Portrait orientation 9 by 16, 24 fps, no text, no subtitles, no watermarks');return parts.join('. ');}
+
+function buildSystemPrompt(){
+return 'Animate this exact image as the starting frame. The subject must remain IDENTICAL to the input image: same composition, same proportions, same shapes, same colors, same textures, same lighting, same atmosphere, same elements. This is a CONTINUATION of the source image, not a re imagination. Add only a subtle cinematic camera movement: slow dolly in, or very slow lateral move, or parallax depth move, or gentle orbital move, or progressive reveal of depth. Animate ONLY naturally present elements: trees and leaves move gently in the wind, grass and vegetation react subtly, water and waves have natural continuous motion, fish and sea animals move realistically, clouds drift slowly, mist and atmospheric particles evolve naturally, mountains and rocks stay stable with subtle parallax, planets can have extremely slow rotation, stars and cosmic elements have very slight motion. Do not exaggerate. Do not deform, stretch, liquefy, or transform objects. Do not introduce new objects, animals, buildings, mountains, planets, or elements. Do not change structure or identity. Avoid deformation, shape changing, appearing or disappearing elements, abrupt movements, artificial or robotic motion, flickering between frames, sudden light or color variations, AI artifacts, inconsistencies between frames. The scene must remain perfectly coherent and stable throughout. Enhance visual quality significantly: photorealistic extremely detailed rendering, fine sharp textures, precise details, excellent definition, realistic light, natural shadows, realistic reflections, credible atmospheric depth, excellent contrast management, subtle cinematic depth of field, realistic motion blur, natural volumetric light when appropriate. Result should feel like very high resolution near 4K, exceptional detail, natural photographic look. Cinematic high end aesthetic, elegant, refined, sophisticated. Impression of luxury, grandeur, visual richness, beauty, calm, immersion. Premium cinematic production feel, high end nature documentary or luxury advertising. Avoid excessive saturation, artificial or fantasy rendering unless present in the original. The image must stay natural, realistic, credible. Principle: animate the image, do not recreate it.';
+}
+
+function buildUserPrompt(){
+var p=document.getElementById('main-prompt');
+var base=p?p.value.trim():'';
+var parts=[buildSystemPrompt()];
+if(base)parts.push('Additional direction: '+base);
+parts.push('Portrait orientation 9 by 16, 24 fps, no text, no subtitles, no watermarks');
+return parts.join('. ');
+}
+
 function getApiKey(){try{return (localStorage.getItem(API_KEY_STORAGE)||'').trim();}catch(e){return'';}}
-function saveApiKey(){var input=document.getElementById('api-key-input');if(!input)return;var key=input.value.trim();if(!key){try{localStorage.removeItem(API_KEY_STORAGE);}catch(e){}updateApiPanel();showToast('Cle supprimee','warn');return;}try{localStorage.setItem(API_KEY_STORAGE,key);updateApiPanel();showToast('Cle API enregistree','success');input.blur();}catch(e){showToast('Erreur sauvegarde','error');}}
-function updateApiPanel(){var panel=document.getElementById('api-panel');var input=document.getElementById('api-key-input');var line=document.getElementById('api-status-line');var txt=document.getElementById('api-status-text');var key=getApiKey();if(!panel||!input||!line||!txt)return;if(key){panel.classList.add('ok');line.classList.add('ok');txt.textContent='Cle active : '+key.slice(0,8)+'...'+key.slice(-4);input.value=key;input.placeholder='';}else{panel.classList.remove('ok');line.classList.remove('ok');txt.textContent='Aucune cle API enregistree';input.value='';input.placeholder='Collez votre cle API ici (sk-...)';}updateGenerateBtn();}
-function updateGenerateBtn(){var b=document.getElementById('generate-btn');if(!b)return;var hasImg=state.images.length>0;var hasKey=!!getApiKey();b.disabled=!hasImg||!hasKey||state.isRunning||state.isLoadingImages;if(state.isLoadingImages)b.textContent='Chargement ('+state.images.length+')';else if(state.isRunning){var d=state.completed+state.failed;b.textContent='Creation... ('+d+'/'+state.queue.length+')';}else if(!hasKey)b.textContent='Ajoutez votre cle API';else if(!hasImg)b.textContent='Ajoutez des images';else b.textContent='Creer '+state.images.length+' video'+(state.images.length>1?'s':'');}
+function saveApiKey(){
+var input=document.getElementById('api-key-input');
+if(!input)return;
+var key=input.value.trim();
+if(!key){try{localStorage.removeItem(API_KEY_STORAGE);}catch(e){}updateApiPanel();showToast('Cle supprimee','warn');return;}
+try{localStorage.setItem(API_KEY_STORAGE,key);updateApiPanel();showToast('Cle API enregistree','success');input.blur();}
+catch(e){showToast('Erreur sauvegarde','error');}
+}
+function updateApiPanel(){
+var panel=document.getElementById('api-panel');
+var input=document.getElementById('api-key-input');
+var line=document.getElementById('api-status-line');
+var txt=document.getElementById('api-status-text');
+var key=getApiKey();
+if(!panel||!input||!line||!txt)return;
+if(key){panel.classList.add('ok');line.classList.add('ok');txt.textContent='Cle active : '+key.slice(0,8)+'...'+key.slice(-4);input.value=key;input.placeholder='';}
+else{panel.classList.remove('ok');line.classList.remove('ok');txt.textContent='Aucune cle API enregistree';input.value='';input.placeholder='Collez votre cle API ici (sk-...)';}
+updateGenerateBtn();
+}
+function updateGenerateBtn(){
+var b=document.getElementById('generate-btn');
+if(!b)return;
+var hasImg=state.images.length>0;
+var hasKey=!!getApiKey();
+b.disabled=!hasImg||!hasKey||state.isRunning||state.isLoadingImages;
+if(state.isLoadingImages)b.textContent='Chargement ('+state.images.length+')';
+else if(state.isRunning){var d=state.completed+state.failed;b.textContent='Creation... ('+d+'/'+state.queue.length+')';}
+else if(!hasKey)b.textContent='Ajoutez votre cle API';
+else if(!hasImg)b.textContent='Ajoutez des images';
+else b.textContent='Creer '+state.images.length+' video'+(state.images.length>1?'s':'');
+}
 function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}
-function log(m){console.log('[Nature] '+m);}
+function log(m){try{console.log('[Nature] '+m);}catch(e){}}
 function setStatus(t){var b=document.getElementById('status-bar');var x=document.getElementById('status-text');if(!b||!x)return;if(t){b.classList.add('visible');x.textContent=t;}else b.classList.remove('visible');}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function formatEta(sec){if(sec<60)return Math.round(sec)+'s';var m=Math.floor(sec/60);var s=Math.round(sec%60);return m+'m'+(s>0?' '+s+'s':'');}
-var state={images:[],isRunning:false,stopRequested:false,queue:[],completed:0,failed:0,isLoadingImages:false};
+
+var state={images:[],isRunning:false,stopRequested:false,queue:[],completed:0,failed:0,isLoadingImages:false,durationFrames:153};
+
 function fileToDataUri(f){return new Promise(function(res,rej){var r=new FileReader();r.onload=function(e){res(e.target.result);};r.onerror=function(){rej(new Error('read error'));};r.readAsDataURL(f);});}
 function generateThumbnail(uri){return new Promise(function(res){var img=new Image();img.onload=function(){try{var c=document.createElement('canvas');var ratio=img.height/img.width;c.width=THUMBNAIL_MAX_WIDTH;c.height=Math.round(THUMBNAIL_MAX_WIDTH*ratio);var ctx=c.getContext('2d');ctx.drawImage(img,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',0.7));}catch(e){res(uri);}};img.onerror=function(){res(uri);};img.src=uri;});}
-function processOneFile(f){if(!f.type.startsWith('image/'))return Promise.resolve(null);if(f.size>MAX_IMAGE_SIZE)return Promise.resolve(null);return fileToDataUri(f).then(function(uri){return generateThumbnail(uri).then(function(thumb){return{file:f,dataUri:uri,thumbnail:thumb,id:Date.now()+Math.random()};});}).catch(function(){return null;});}
-function handleFiles(files){var arr=Array.prototype.slice.call(files).filter(function(f){return f.type.startsWith('image/');});if(!arr.length)return;state.isLoadingImages=true;updateGenerateBtn();setStatus('Chargement de '+arr.length+' image'+(arr.length>1?'s':'')+'...');var idx=0;function next(){if(idx>=arr.length){state.isLoadingImages=false;setStatus(null);updateGenerateBtn();showToast(arr.length+' image'+(arr.length>1?'s ajoutees':' ajoutee'),'success');return;}processOneFile(arr[idx]).then(function(item){if(item)state.images.push(item);renderImages();idx++;setStatus('Chargement '+idx+'/'+arr.length);setTimeout(next,50);});}next();}
+function processOneFile(f){if(!f.type||f.type.indexOf('image/')!==0)return Promise.resolve(null);if(f.size>MAX_IMAGE_SIZE)return Promise.resolve(null);return fileToDataUri(f).then(function(uri){return generateThumbnail(uri).then(function(thumb){return{file:f,dataUri:uri,thumbnail:thumb,id:Date.now()+Math.random()};});}).catch(function(){return null;});}
+function handleFiles(files){var arr=Array.prototype.slice.call(files).filter(function(f){return f.type&&f.type.indexOf('image/')===0;});if(!arr.length)return;state.isLoadingImages=true;updateGenerateBtn();setStatus('Chargement de '+arr.length+' image'+(arr.length>1?'s':'')+'...');var idx=0;function next(){if(idx>=arr.length){state.isLoadingImages=false;setStatus(null);updateGenerateBtn();showToast(arr.length+' image'+(arr.length>1?'s ajoutees':' ajoutee'),'success');return;}processOneFile(arr[idx]).then(function(item){if(item)state.images.push(item);renderImages();idx++;setStatus('Chargement '+idx+'/'+arr.length);setTimeout(next,50);});}next();}
 function removeImage(id){state.images=state.images.filter(function(img){return img.id!==id;});renderImages();updateGenerateBtn();}
 function renderImages(){var grid=document.getElementById('images-grid');if(!grid)return;grid.innerHTML=state.images.map(function(img){return '<div class="image-card"><img src="'+(img.thumbnail||img.dataUri)+'"><button class="remove-btn" data-remove="'+img.id+'">X</button></div>';}).join('');grid.querySelectorAll('[data-remove]').forEach(function(btn){btn.addEventListener('click',function(e){e.stopPropagation();removeImage(parseFloat(btn.dataset.remove));});});}
 function renderPromptPresets(){var c=document.getElementById('prompt-presets');if(!c)return;c.innerHTML=PROMPT_PRESETS.map(function(p,i){return '<div class="prompt-preset" data-preset="'+i+'">'+esc(p.label)+'</div>';}).join('');c.querySelectorAll('.prompt-preset').forEach(function(el){el.addEventListener('click',function(){var i=parseInt(el.dataset.preset,10);var p=PROMPT_PRESETS[i];if(!p)return;var ta=document.getElementById('main-prompt');ta.value=p.text;showToast('Exemple applique','success',1200);});});}
-function apiFetch(url,options,label){options=options||{};var maxAttempts=7;function attempt(n){if(state.stopRequested)return Promise.reject(new Error('Arret demande'));return fetch(url,options).then(function(res){if(res.status===429){if(createIntervalMs<CREATE_INTERVAL_MAX)createIntervalMs=Math.min(createIntervalMs+8000,CREATE_INTERVAL_MAX);var wait=[15,30,45,60,90,120,180][Math.min(n,6)];log(label+' 429 attente '+wait+'s');setStatus('Preparation IA ('+wait+'s)...');return sleep(wait*1000).then(function(){return n<maxAttempts?attempt(n+1):res;});}if(res.status===503){var wait=[5,10,15,20,30,45][Math.min(n,5)];log(label+' 503 attente '+wait+'s');setStatus('Preparation ('+wait+'s)...');return sleep(wait*1000).then(function(){return n<maxAttempts?attempt(n+1):res;});}return res;}).catch(function(e){if(e.message==='Arret demande')throw e;if(n>=maxAttempts)throw e;var wait=[3,5,8,12,20,30][Math.min(n,5)];log(label+' reseau retry '+wait+'s');setStatus('Connexion ('+wait+'s)...');return sleep(wait*1000).then(function(){return attempt(n+1);});});}return attempt(0);}
-async function createVideoTask(imageDataUri,prompt){
+
+function apiFetch(url,options,label){
+options=options||{};
+var maxAttempts=7;
+function attempt(n){
+if(state.stopRequested)return Promise.reject(new Error('Arret demande'));
+return fetch(url,options).then(function(res){
+if(res.status===429){
+if(createIntervalMs<CREATE_INTERVAL_MAX)createIntervalMs=Math.min(createIntervalMs+8000,CREATE_INTERVAL_MAX);
+var wait=[15,30,45,60,90,120,180][Math.min(n,6)];
+log(label+' 429 attente '+wait+'s');
+setStatus('Preparation IA ('+wait+'s)...');
+return sleep(wait*1000).then(function(){return n<maxAttempts?attempt(n+1):res;});
+}
+if(res.status===503){
+var wait=[5,10,15,20,30,45][Math.min(n,5)];
+log(label+' 503 attente '+wait+'s');
+setStatus('Preparation ('+wait+'s)...');
+return sleep(wait*1000).then(function(){return n<maxAttempts?attempt(n+1):res;});
+}
+return res;
+}).catch(function(e){
+if(e.message==='Arret demande')throw e;
+if(n>=maxAttempts)throw e;
+var wait=[3,5,8,12,20,30][Math.min(n,5)];
+log(label+' reseau retry '+wait+'s');
+setStatus('Connexion ('+wait+'s)...');
+return sleep(wait*1000).then(function(){return attempt(n+1);});
+});
+}
+return attempt(0);
+}
+
+function createVideoTask(imageDataUri,prompt){
 var body={model:MODEL_VIDEO,prompt:prompt,image:imageDataUri,num_frames:state.durationFrames,frame_rate:FRAME_RATE};
-var res=await apiFetch(API_BASE+'/videos',{method:'POST',headers:{'Authorization':'Bearer '+getApiKey()}}, 'Creation');
-if(!res.ok){var err=await res.text();throw new Error('HTTP '+res.status+' '+err.slice(0,200));}
-var data=await res.json();
+return apiFetch(API_BASE+'/videos',{method:'POST',headers:{'Authorization':'Bearer '+getApiKey(),'Content-Type':'application/json'},body:JSON.stringify(body)},'Creation').then(function(res){
+if(!res.ok)return res.text().then(function(err){throw new Error('HTTP '+res.status+' '+err.slice(0,200));});
+return res.json();
+}).then(function(data){
 var videoId=data.video_id||data.id||data.task_id;
 if(!videoId)throw new Error('Pas de video_id');
 return videoId;
+});
 }
-async function pollVideo(videoId,onProgress){
+
+function pollVideo(videoId,onProgress){
 var estimatedMs=estimateGenerationTime(state.durationFrames);
 var estimatedSec=estimatedMs/1000;
 var remaining=Math.max(20,Math.floor(estimatedSec*0.8));
-while(remaining>0){if(state.stopRequested)throw new Error('Arret demande');onProgress('Preparation... '+remaining+'s');await sleep(1000);remaining--;}
-for(var attempt=0;attempt<MAX_POLL_ATTEMPTS;attempt++){
-if(state.stopRequested)throw new Error('Arret demande');
-if(attempt>0){var r=POLL_INTERVAL_SEC;while(r>0){if(state.stopRequested)throw new Error('Arret demande');onProgress('Creation... '+r+'s');await sleep(1000);r--;}}
+function waitInitial(){
+if(remaining<=0)return Promise.resolve();
+if(state.stopRequested)return Promise.reject(new Error('Arret demande'));
+onProgress('Preparation... '+remaining+'s');
+remaining--;
+return sleep(1000).then(waitInitial);
+}
+return waitInitial().then(function(){
+function poll(attempt){
+if(state.stopRequested)return Promise.reject(new Error('Arret demande'));
+if(attempt>=MAX_POLL_ATTEMPTS)return Promise.reject(new Error('Timeout'));
 var url=POLL_BASE+'?video_id='+encodeURIComponent(videoId)+'&model_name='+encodeURIComponent(MODEL_VIDEO);
-var res=await apiFetch(url,{method:'GET',headers:{'Authorization':'Bearer '+getApiKey()}},'Polling');
-var d=await res.json();
+return apiFetch(url,{method:'GET',headers:{'Authorization':'Bearer '+getApiKey()}},'Polling').then(function(res){return res.json();}).then(function(d){
 var status=d.status||'unknown';
 var progress=d.progress||0;
 onProgress('Creation... '+progress+'%');
@@ -223,8 +311,13 @@ if(!videoUrl)throw new Error('Pas URL');
 return videoUrl;
 }
 if(status==='failed'||status==='error'||status==='cancelled')throw new Error('Echec '+status);
+var r=POLL_INTERVAL_SEC;
+function tick(){if(r<=0)return Promise.resolve();if(state.stopRequested)return Promise.reject(new Error('Arret demande'));onProgress('Creation... '+r+'s');r--;return sleep(1000).then(tick);}
+return tick().then(function(){return poll(attempt+1);});
+});
 }
-throw new Error('Timeout');
+return poll(0);
+});
 }
 function renderQueue(){
 var q=document.getElementById('queue');
@@ -238,7 +331,7 @@ var pending=total-done-inProg;
 var estGen=estimateGenerationTime(state.durationFrames)/1000;
 var remainingCreates=pending;
 var eta=remainingCreates>0?remainingCreates*(createIntervalMs/1000)+estGen:inProg*estGen;
-var html='<div class="queue-summary"><span>Progression : '+done+'/'+total+'</span><span>'+ (done<total?'~ '+formatEta(eta)+' restant':'Termine') +'</span></div>';
+var html='<div class="queue-summary"><span>Progression : '+done+'/'+total+'</span><span>'+(done<total?'~ '+formatEta(eta)+' restant':'Termine')+'</span></div>';
 var visible=state.queue.slice(0,30);
 html+=visible.map(function(item){
 var icon='o',st='En attente',cls='';
@@ -250,6 +343,7 @@ return '<div class="queue-item '+cls+'"><div class="q-icon">'+icon+'</div><div c
 }).join('');
 q.innerHTML=html;
 }
+
 function addToGallery(videoUrl,label){
 var g=document.getElementById('gallery');
 var gg=document.getElementById('gallery-grid');
@@ -260,24 +354,26 @@ el.className='gallery-item';
 el.innerHTML='<video controls preload="metadata" muted playsinline><source src="'+videoUrl+'" type="video/mp4"></video><div class="g-caption">'+esc(label)+'</div>';
 gg.appendChild(el);
 }
-async function createTaskOnly(item){
+
+function createTaskOnly(item){
 item.status='creating';
 item.progress='Preparation';
 renderQueue();
 var prompt=buildUserPrompt();
 item.prompt=prompt;
 log('Image '+(item.imageIndex+1)+' creation');
-var videoId=await createVideoTask(item.image.dataUri,prompt);
+return createVideoTask(item.image.dataUri,prompt).then(function(videoId){
 item.videoId=videoId;
 item.startTime=Date.now();
 item.status='processing';
 item.progress='En cours';
 renderQueue();
 return videoId;
+});
 }
-async function pollTaskAndDisplay(item){
-try{
-var videoUrl=await pollVideo(item.videoId,function(p){item.progress=p;renderQueue();});
+
+function pollTaskAndDisplay(item){
+return pollVideo(item.videoId,function(p){item.progress=p;renderQueue();}).then(function(videoUrl){
 var elapsed=Date.now()-item.startTime;
 recordGenerationTime(state.durationFrames,elapsed);
 item.status='done';
@@ -287,14 +383,15 @@ state.completed++;
 renderQueue();
 updateGenerateBtn();
 addToGallery(videoUrl,'Image '+(item.imageIndex+1));
-}catch(e){
+}).catch(function(e){
 if(e.message==='Arret demande'){item.status='failed';item.progress='Arrete';}
 else{item.status='failed';item.progress='Echec';state.failed++;}
 renderQueue();
 updateGenerateBtn();
+});
 }
-}
-async function startGeneration(){
+
+function startGeneration(){
 if(state.isRunning||!state.images.length)return;
 if(!getApiKey()){showToast('Ajoutez votre cle API','error');return;}
 state.isRunning=true;
@@ -307,40 +404,56 @@ document.getElementById('gallery-grid').innerHTML='';
 document.getElementById('gallery').style.display='none';
 document.getElementById('stop-btn').classList.add('visible');
 document.getElementById('generate-btn').disabled=true;
-await ensureWakeLockActive();
+ensureWakeLockActive().then(function(){return runQueue();});
+}
+
+function runQueue(){
 renderQueue();
 updateGenerateBtn();
 var totalStart=Date.now();
 var pollingTasks=[];
-try{
-for(var i=0;i<state.queue.length;i++){
-if(state.stopRequested)break;
+function nextCreate(i){
+if(state.stopRequested||i>=state.queue.length)return Promise.resolve();
 var item=state.queue[i];
-try{await createTaskOnly(item);pollingTasks.push(pollTaskAndDisplay(item));}
-catch(e){if(e.message==='Arret demande')break;item.status='failed';item.progress='Echec';state.failed++;renderQueue();updateGenerateBtn();}
+return createTaskOnly(item).then(function(){
+pollingTasks.push(pollTaskAndDisplay(item));
+}).catch(function(e){
+if(e.message==='Arret demande')return;
+item.status='failed';item.progress='Echec';state.failed++;
+renderQueue();updateGenerateBtn();
+}).then(function(){
 if(i<state.queue.length-1&&!state.stopRequested){
 var waitSec=Math.ceil(createIntervalMs/1000);
-for(var r=waitSec;r>0;r--){
-if(state.stopRequested)break;
-setStatus('Respiration... Image '+(i+2)+'/'+state.queue.length+' dans '+r+'s');
-await sleep(1000);
+function tick(){
+if(waitSec<=0||state.stopRequested)return Promise.resolve();
+setStatus('Respiration... Image '+(i+2)+'/'+state.queue.length+' dans '+waitSec+'s');
+waitSec--;
+return sleep(1000).then(tick);
 }
+return tick();
 }
+return Promise.resolve();
+}).then(function(){return nextCreate(i+1);});
 }
-if(pollingTasks.length>0){setStatus('Finalisation...');await Promise.allSettled(pollingTasks);}
-}catch(e){log('Erreur globale '+e.message);}
+return nextCreate(0).then(function(){
+if(pollingTasks.length>0){setStatus('Finalisation...');return Promise.allSettled(pollingTasks);}
+}).then(function(){
 var totalElapsed=(Date.now()-totalStart)/1000;
 var summary=state.stopRequested?'Arrete '+state.completed+'/'+state.queue.length:'OK '+state.completed+'/'+state.queue.length+' videos en '+formatEta(totalElapsed);
 setStatus(summary);
-await sleep(4000);
+return sleep(4000);
+}).then(function(){
 setStatus(null);
 state.isRunning=false;
 state.stopRequested=false;
 document.getElementById('stop-btn').classList.remove('visible');
 updateGenerateBtn();
 showToast(state.completed+' video'+(state.completed>1?'s':'')+' creee'+(state.completed>1?'s':''),'success');
+});
 }
+
 function stopGeneration(){if(!state.isRunning)return;state.stopRequested=true;setStatus('Arret en cours...');}
+
 function init(){
 var saveBtn=document.getElementById('api-save-btn');
 if(saveBtn)saveBtn.addEventListener('click',saveApiKey);
@@ -348,12 +461,21 @@ var stopBtn=document.getElementById('stop-btn');
 if(stopBtn)stopBtn.addEventListener('click',stopGeneration);
 var apiInput=document.getElementById('api-key-input');
 if(apiInput)apiInput.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();saveApiKey();}});
-document.querySelectorAll('[data-toggle]').forEach(function(h){h.addEventListener('click',function(){var el=document.getElementById(h.dataset.toggle);if(el)el.classList.toggle('open');});});
+var headers=document.querySelectorAll('[data-toggle]');
+for(var i=0;i<headers.length;i++){
+(function(h){
+h.addEventListener('click',function(){
+var el=document.getElementById(h.getAttribute('data-toggle'));
+if(el)el.classList.toggle('open');
+});
+})(headers[i]);
+}
 var uploadZone=document.getElementById('upload-zone');
 var fileInput=document.getElementById('file-input');
-if(uploadZone&&fileInput){uploadZone.addEventListener('click',function(){fileInput.click();});fileInput.addEventListener('change',function(e){handleFiles(e.target.files);fileInput.value='';});}
-var mainPrompt=document.getElementById('main-prompt');
-if(mainPrompt)mainPrompt.addEventListener('input',function(e){});
+if(uploadZone&&fileInput){
+uploadZone.addEventListener('click',function(){fileInput.click();});
+fileInput.addEventListener('change',function(e){handleFiles(e.target.files);fileInput.value='';});
+}
 var durationSelect=document.getElementById('duration-select');
 if(durationSelect)durationSelect.addEventListener('change',function(e){state.durationFrames=parseInt(e.target.value,10)||153;});
 var generateBtn=document.getElementById('generate-btn');
@@ -362,7 +484,6 @@ var wakeBtn=document.getElementById('wake-toggle-btn');
 if(wakeBtn)wakeBtn.addEventListener('click',toggleWakeLock);
 try{var saved=localStorage.getItem(WAKE_LOCK_PREF);wakeLockEnabled=saved==='1';}catch(e){}
 if(wakeLockEnabled)activateWakeLock().then(function(){updateWakeStatus();});
-state.durationFrames=153;
 updateApiPanel();
 updateTimingDisplay();
 updateWakeStatus();
@@ -371,6 +492,7 @@ renderImages();
 renderQueue();
 log('Pret');
 }
+
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);
 else init();
 })();
