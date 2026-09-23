@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Nature Cinématique — Images vivantes</title>
+<title>Nature Cinematique - Images vivantes</title>
 <style>
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     :root {
@@ -318,68 +318,61 @@
 <body>
 
 <header>
-    <h1>Nature Cinématique</h1>
-    <p class="subtitle">Vos images nature prennent vie, sans jamais être recréées</p>
+    <h1>Nature Cinematique</h1>
+    <p class="subtitle">Vos images nature prennent vie, sans jamais etre recreees</p>
 </header>
 
 <div class="info-banner">
-    <strong>Principe :</strong> l’image originale reste la <strong>référence absolue</strong>.
-    L’IA ajoute uniquement un <strong>mouvement de caméra cinématographique</strong> et
-    l’<strong>animation réaliste des éléments naturels</strong> déjà présents
-    (vent, eau, nuages, vagues, brume, étoiles, planètes…), sans jamais
-    déformer, inventer ou recréer la scène.
+    <strong>Principe :</strong> l image originale reste la <strong>reference absolue</strong>.
+    L IA ajoute uniquement un <strong>mouvement de camera cinematographique</strong> et
+    l <strong>animation realiste des elements naturels</strong> deja presents
+    (vent, eau, nuages, vagues, brume, etoiles, planetes...), sans jamais
+    deformer, inventer ou recreer la scene.
 </div>
 
 <div class="api-panel" id="api-panel">
     <input type="password" class="api-key-input" id="api-key-input"
-           placeholder="Collez votre clé API ici (sk-...)" autocomplete="off" spellcheck="false">
-    <button type="button" class="api-save-btn" id="api-save-btn">Enregistrer la clé</button>
+           placeholder="Collez votre cle API ici (sk-...)" autocomplete="off" spellcheck="false">
+    <button type="button" class="api-save-btn" id="api-save-btn">Enregistrer la cle</button>
     <div class="api-status-line" id="api-status-line">
         <span class="status-dot"></span>
-        <span id="api-status-text">Aucune clé API enregistrée</span>
+        <span id="api-status-text">Aucune cle API enregistree</span>
     </div>
     <div class="api-hint">
-        Clé gratuite sur <a href="https://platform.agnes-ai.com" target="_blank">platform.agnes-ai.com</a> → Settings → API Keys
+        Cle gratuite sur <a href="https://platform.agnes-ai.com" target="_blank">platform.agnes-ai.com</a> puis Settings puis API Keys
     </div>
     <div class="stat-line" id="stat-line">
-        <span>📊 Vitesse moyenne : <span id="stat-speed">en attente de données</span></span>
-        <span id="stat-samples">0 génération</span>
+        <span>Vitesse moyenne : <span id="stat-speed">en attente de donnees</span></span>
+        <span id="stat-samples">0 generation</span>
     </div>
     <div class="wake-status" id="wake-status">
-        <span id="wake-status-text">💤 Veille automatique</span>
-        <button type="button" id="wake-toggle-btn">Garder l'écran allumé</button>
+        <span id="wake-status-text">Veille automatique</span>
+        <button type="button" id="wake-toggle-btn">Garder l ecran allume</button>
     </div>
 </div>
 
 <div class="upload-zone" id="upload-zone">
     <input type="file" id="file-input" accept="image/*" multiple>
-    <div class="upload-icon">＋</div>
+    <div class="upload-icon">+</div>
     <div class="upload-text">Ajoutez vos images nature</div>
-    <div class="upload-hint">Arbre, océan, espace, montagne, plage, forêt, rivière, ciel étoilé…</div>
+    <div class="upload-hint">Arbre, ocean, espace, montagne, plage, foret, riviere, ciel etoile...</div>
 </div>
 
 <div class="images-grid" id="images-grid"></div>
 
 <div class="section open" id="section-prompt">
     <div class="section-header" data-toggle="section-prompt">
-        <span class="section-title">✍️ Précision optionnelle <span class="badge soft">facultatif</span></span>
-        <span class="chevron">▼</span>
+        <span class="section-title">Precision optionnelle <span class="badge soft">facultatif</span></span>
+        <span class="chevron">v</span>
     </div>
     <div class="section-body">
         <div class="section-content">
             <textarea class="prompt-main" id="main-prompt"
-                placeholder="Ajoutez une précision si vous le souhaitez. Par exemple :
-
-« brise légère dans les feuilles, lumière dorée de fin de journée »
-« vagues calmes, reflets argentés »
-« nuages lents, brume matinale »
-« rotation très lente de la planète, étoiles stables »
-
-Laissez vide pour un rendu nature cinématographique neutre et équilibré."></textarea>
+                placeholder="Ajoutez une precision si vous le souhaitez. Par exemple : brise legere dans les feuilles, lumiere doree de fin de journee. Laissez vide pour un rendu nature cinematographique neutre."></textarea>
             <div class="prompt-presets" id="prompt-presets"></div>
             <div class="prompt-main-hint">
-                💡 Cette précision s’ajoute au <strong>prompt système verrouillé</strong> qui garantit
-                la préservation totale de l’image, le réalisme, la stabilité et l’absence d’artefacts.
+                Cette precision s ajoute au prompt systeme verrouille qui garantit
+                la preservation totale de l image, le realisme, la stabilite et l absence d artefacts.
             </div>
         </div>
     </div>
@@ -387,48 +380,48 @@ Laissez vide pour un rendu nature cinématographique neutre et équilibré."></t
 
 <div class="section" id="section-tech">
     <div class="section-header" data-toggle="section-tech">
-        <span class="section-title">📷 Réglages techniques</span>
-        <span class="chevron">▼</span>
+        <span class="section-title">Reglages techniques</span>
+        <span class="chevron">v</span>
     </div>
     <div class="section-body">
         <div class="section-content">
             <div class="control-row">
-                <label class="control-label">Durée de chaque vidéo</label>
+                <label class="control-label">Duree de chaque video</label>
                 <select id="duration-select">
                     <option value="121">5 secondes</option>
-                    <option value="153" selected>6,4 secondes (recommandé)</option>
+                    <option value="153" selected>6,4 secondes (recommande)</option>
                     <option value="241">10 secondes</option>
                 </select>
             </div>
             <div class="control-row">
-                <label class="control-label">Mouvement de caméra</label>
+                <label class="control-label">Mouvement de camera</label>
                 <select id="camera-select">
-                    <option value="random" selected>Aléatoire (selon la composition)</option>
+                    <option value="random" selected>Aleatoire (selon la composition)</option>
                     <option value="push">Travelling avant lent</option>
-                    <option value="lateral">Travelling latéral très lent</option>
-                    <option value="parallax">Travelling en profondeur + parallaxe</option>
-                    <option value="orbit">Léger mouvement orbital</option>
-                    <option value="reveal">Révélation progressive de la profondeur</option>
+                    <option value="lateral">Travelling lateral tres lent</option>
+                    <option value="parallax">Travelling en profondeur et parallaxe</option>
+                    <option value="orbit">Leger mouvement orbital</option>
+                    <option value="reveal">Revelation progressive de la profondeur</option>
                 </select>
             </div>
             <div class="control-row">
-                <label class="control-label">Intensité du mouvement naturel</label>
+                <label class="control-label">Intensite du mouvement naturel</label>
                 <select id="intensity-select">
-                    <option value="random">Aléatoire</option>
-                    <option value="subtle" selected>Subtile (réaliste)</option>
-                    <option value="moderate">Modérée</option>
+                    <option value="random">Aleatoire</option>
+                    <option value="subtle" selected>Subtile (realiste)</option>
+                    <option value="moderate">Moderee</option>
                 </select>
             </div>
             <div class="control-row">
-                <label class="control-label">Type de scène nature</label>
+                <label class="control-label">Type de scene nature</label>
                 <select id="scene-select">
-                    <option value="auto" selected>Détection automatique</option>
-                    <option value="forest">Forêt / arbres</option>
-                    <option value="ocean">Océan / mer / plage</option>
-                    <option value="mountain">Montagne / rochers</option>
-                    <option value="space">Espace / planètes / étoiles</option>
-                    <option value="river">Rivière / cascade / lac</option>
-                    <option value="sky">Ciel / nuages / brume</option>
+                    <option value="auto" selected>Detection automatique</option>
+                    <option value="forest">Foret et arbres</option>
+                    <option value="ocean">Ocean, mer et plage</option>
+                    <option value="mountain">Montagne et rochers</option>
+                    <option value="space">Espace, planetes et etoiles</option>
+                    <option value="river">Riviere, cascade et lac</option>
+                    <option value="sky">Ciel, nuages et brume</option>
                 </select>
             </div>
         </div>
@@ -436,27 +429,27 @@ Laissez vide pour un rendu nature cinématographique neutre et équilibré."></t
 </div>
 
 <button type="button" class="btn-primary" id="generate-btn" disabled>
-    Créer les vidéos
+    Creer les videos
 </button>
 
 <button type="button" class="btn-stop" id="stop-btn">
-    ⏹ Arrêter la génération
+    Arreter la generation
 </button>
 
 <div class="queue" id="queue" style="display:none;"></div>
 
 <div class="gallery" id="gallery" style="display:none;">
-    <div class="section-title" style="margin-bottom:0.8rem;">Vidéos générées</div>
+    <div class="section-title" style="margin-bottom:0.8rem;">Videos generees</div>
     <div class="gallery-grid" id="gallery-grid"></div>
 </div>
 
 <div class="status-bar" id="status-bar">
     <div class="spinner"></div>
-    <span id="status-text">Préparation…</span>
+    <span id="status-text">Preparation...</span>
 </div>
 
 <div class="toast" id="toast">
-    <span class="toast-icon" id="toast-icon">✓</span>
+    <span class="toast-icon" id="toast-icon">OK</span>
     <span id="toast-text">Message</span>
 </div>
 
@@ -464,166 +457,200 @@ Laissez vide pour un rendu nature cinématographique neutre et équilibré."></t
 <video id="noSleepVideo" playsinline muted loop></video>
 
 <script>
-// ══════════════════════════════════════════════════════════════════
-// CONFIGURATION
-// ══════════════════════════════════════════════════════════════════
-const API_BASE = 'https://apihub.agnes-ai.com/v1';
-const POLL_BASE = 'https://apihub.agnes-ai.com/agnesapi';
-const MODEL_VIDEO = 'agnes-video-v2.0';
-const FRAME_RATE = 24;
+(function() {
+    'use strict';
 
-let createIntervalMs = 62000;
-const CREATE_INTERVAL_MIN = 62000;
-const CREATE_INTERVAL_MAX = 90000;
-const CREATE_INTERVAL_SAFE = 75000;
+    var API_BASE = 'https://apihub.agnes-ai.com/v1';
+    var POLL_BASE = 'https://apihub.agnes-ai.com/agnesapi';
+    var MODEL_VIDEO = 'agnes-video-v2.0';
+    var FRAME_RATE = 24;
 
-const POLL_INTERVAL_SEC = 8;
-const MAX_POLL_ATTEMPTS = 100;
+    var createIntervalMs = 62000;
+    var CREATE_INTERVAL_MIN = 62000;
+    var CREATE_INTERVAL_MAX = 90000;
+    var CREATE_INTERVAL_SAFE = 75000;
 
-const TIMING_CACHE_KEY = 'agnes_timing_cache_v10';
-const API_KEY_STORAGE = 'agnes_api_key';
-const WAKE_LOCK_PREF = 'agnes_wakelock_enabled';
+    var POLL_INTERVAL_SEC = 8;
+    var MAX_POLL_ATTEMPTS = 100;
 
-const MAX_VISIBLE_QUEUE = 30;
-const MAX_IMAGE_SIZE = 12 * 1024 * 1024;
-const THUMBNAIL_MAX_WIDTH = 200;
+    var TIMING_CACHE_KEY = 'agnes_timing_cache_v10';
+    var API_KEY_STORAGE = 'agnes_api_key';
+    var WAKE_LOCK_PREF = 'agnes_wakelock_enabled';
 
-// ══════════════════════════════════════════════════════════════════
-// TOAST
-// ══════════════════════════════════════════════════════════════════
-let toastTimeout = null;
-function showToast(message, type = 'success', duration = 2500) {
-    const toast = document.getElementById('toast');
-    const icon = document.getElementById('toast-icon');
-    const text = document.getElementById('toast-text');
-    if (!toast || !icon || !text) return;
+    var MAX_VISIBLE_QUEUE = 30;
+    var MAX_IMAGE_SIZE = 12 * 1024 * 1024;
+    var THUMBNAIL_MAX_WIDTH = 200;
 
-    toast.classList.remove('visible', 'success', 'error', 'warn');
-    void toast.offsetWidth;
+    var toastTimeout = null;
+    function showToast(message, type, duration) {
+        type = type || 'success';
+        duration = duration || 2500;
+        var toast = document.getElementById('toast');
+        var icon = document.getElementById('toast-icon');
+        var text = document.getElementById('toast-text');
+        if (!toast || !icon || !text) return;
+        toast.classList.remove('visible', 'success', 'error', 'warn');
+        void toast.offsetWidth;
+        var icons = { success: 'OK', error: 'X', warn: '!' };
+        icon.textContent = icons[type] || 'OK';
+        text.textContent = message;
+        toast.classList.add(type);
+        requestAnimationFrame(function() { toast.classList.add('visible'); });
+        if (toastTimeout) clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(function() { toast.classList.remove('visible'); }, duration);
+    }
 
-    const icons = { success: '✓', error: '✕', warn: '⚠' };
-    icon.textContent = icons[type] || '✓';
-    text.textContent = message;
-    toast.classList.add(type);
+    var wakeLockSentinel = null;
+    var wakeLockEnabled = false;
+    var canvasStream = null;
+    var canvasInterval = null;
 
-    requestAnimationFrame(() => toast.classList.add('visible'));
+    function isWakeLockSupported() {
+        return 'wakeLock' in navigator && typeof navigator.wakeLock.request === 'function';
+    }
 
-    if (toastTimeout) clearTimeout(toastTimeout);
-    toastTimeout = setTimeout(() => toast.classList.remove('visible'), duration);
-}
+    function requestWakeLockAPI() {
+        if (!isWakeLockSupported()) return Promise.resolve(false);
+        return navigator.wakeLock.request('screen').then(function(sentinel) {
+            wakeLockSentinel = sentinel;
+            sentinel.addEventListener('release', function() {
+                wakeLockSentinel = null;
+                updateWakeStatus();
+            });
+            return true;
+        }).catch(function() { return false; });
+    }
 
-// ══════════════════════════════════════════════════════════════════
-// ANTI-VEILLE
-// ══════════════════════════════════════════════════════════════════
-let wakeLockSentinel = null;
-let wakeLockEnabled = false;
-let canvasStream = null;
-let canvasInterval = null;
-
-function isWakeLockSupported() {
-    return 'wakeLock' in navigator && typeof navigator.wakeLock.request === 'function';
-}
-
-async function requestWakeLockAPI() {
-    if (!isWakeLockSupported()) return false;
-    try {
-        wakeLockSentinel = await navigator.wakeLock.request('screen');
-        wakeLockSentinel.addEventListener('release', () => {
+    function releaseWakeLockAPI() {
+        if (wakeLockSentinel) {
+            try { wakeLockSentinel.release(); } catch (e) {}
             wakeLockSentinel = null;
-            updateWakeStatus();
-        });
-        return true;
-    } catch (e) {
-        return false;
+        }
+        return Promise.resolve();
     }
-}
 
-async function releaseWakeLockAPI() {
-    if (wakeLockSentinel) {
-        try { await wakeLockSentinel.release(); } catch (e) {}
-        wakeLockSentinel = null;
-    }
-}
-
-function startCanvasStream() {
-    if (canvasStream) return true;
-    try {
-        const canvas = document.getElementById('noSleepCanvas');
-        const video = document.getElementById('noSleepVideo');
-        if (!canvas || !video) return false;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return false;
-        ctx.fillStyle = '#000000';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        if (typeof canvas.captureStream !== 'function') return false;
-        canvasStream = canvas.captureStream(1);
-        let toggle = false;
-        canvasInterval = setInterval(() => {
-            toggle = !toggle;
-            ctx.fillStyle = toggle ? '#000000' : '#010101';
+    function startCanvasStream() {
+        if (canvasStream) return true;
+        try {
+            var canvas = document.getElementById('noSleepCanvas');
+            var video = document.getElementById('noSleepVideo');
+            if (!canvas || !video) return false;
+            var ctx = canvas.getContext('2d');
+            if (!ctx) return false;
+            ctx.fillStyle = '#000000';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-        }, 1000);
-        video.srcObject = canvasStream;
-        video.muted = true;
-        video.playsInline = true;
-        const playPromise = video.play();
-        if (playPromise && playPromise.catch) playPromise.catch(() => {});
-        return true;
-    } catch (e) {
-        return false;
+            if (typeof canvas.captureStream !== 'function') return false;
+            canvasStream = canvas.captureStream(1);
+            var toggle = false;
+            canvasInterval = setInterval(function() {
+                toggle = !toggle;
+                ctx.fillStyle = toggle ? '#000000' : '#010101';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }, 1000);
+            video.srcObject = canvasStream;
+            video.muted = true;
+            video.playsInline = true;
+            var p = video.play();
+            if (p && p.catch) p.catch(function() {});
+            return true;
+        } catch (e) {
+            return false;
+        }
     }
-}
 
-function stopCanvasStream() {
-    if (canvasInterval) { clearInterval(canvasInterval); canvasInterval = null; }
-    const video = document.getElementById('noSleepVideo');
-    if (video) { try { video.pause(); video.srcObject = null; } catch (e) {} }
-    if (canvasStream) {
-        try { canvasStream.getTracks().forEach(t => t.stop()); } catch (e) {}
-        canvasStream = null;
+    function stopCanvasStream() {
+        if (canvasInterval) { clearInterval(canvasInterval); canvasInterval = null; }
+        var video = document.getElementById('noSleepVideo');
+        if (video) { try { video.pause(); video.srcObject = null; } catch (e) {} }
+        if (canvasStream) {
+            try { canvasStream.getTracks().forEach(function(t) { t.stop(); }); } catch (e) {}
+            canvasStream = null;
+        }
     }
-}
 
-async function activateWakeLock() {
-    let success = false;
-    if (isWakeLockSupported()) success = await requestWakeLockAPI();
-    if (!success) success = startCanvasStream();
-    if (!success && !canvasStream) success = startCanvasStream();
-    return success;
-}
-
-async function deactivateWakeLock() {
-    await releaseWakeLockAPI();
-    stopCanvasStream();
-}
-
-function updateWakeStatus() {
-    const el = document.getElementById('wake-status');
-    const txt = document.getElementById('wake-status-text');
-    const btn = document.getElementById('wake-toggle-btn');
-    if (!el || !txt || !btn) return;
-    el.classList.remove('active', 'warn');
-    const hasAny = isWakeLockSupported() || (document.getElementById('noSleepCanvas')?.captureStream);
-    if (!hasAny) {
-        el.classList.add('warn');
-        txt.textContent = '⚠️ Non supporté par ce navigateur';
-        btn.style.display = 'none';
-        return;
+    function activateWakeLock() {
+        var success = false;
+        var promise = Promise.resolve(false);
+        if (isWakeLockSupported()) {
+            promise = requestWakeLockAPI();
+        }
+        return promise.then(function(ok) {
+            if (!ok) ok = startCanvasStream();
+            if (!ok && !canvasStream) ok = startCanvasStream();
+            return ok;
+        });
     }
-    btn.style.display = 'inline-block';
-    const isActive = wakeLockSentinel !== null || canvasStream !== null;
-    if (wakeLockEnabled && isActive) {
-        el.classList.add('active');
-        txt.textContent = '✅ L\'écran reste allumé';
-        btn.textContent = 'Désactiver';
-    } else if (wakeLockEnabled && !isActive) {
-        el.classList.add('warn');
-        txt.textContent = '⏳ En attente (touchez la page)';
-        btn.textContent = 'Désactiver';
-    } else {
-        txt.textContent = '💤 Veille automatique';
-        btn.textContent = 'Garder l\'écran allumé';
-    }
-}
 
-async
+    function deactivateWakeLock() {
+        return releaseWakeLockAPI().then(function() { stopCanvasStream(); });
+    }
+
+    function updateWakeStatus() {
+        var el = document.getElementById('wake-status');
+        var txt = document.getElementById('wake-status-text');
+        var btn = document.getElementById('wake-toggle-btn');
+        if (!el || !txt || !btn) return;
+        el.classList.remove('active', 'warn');
+        var canvasEl = document.getElementById('noSleepCanvas');
+        var hasAny = isWakeLockSupported() || (canvasEl && canvasEl.captureStream);
+        if (!hasAny) {
+            el.classList.add('warn');
+            txt.textContent = 'Non supporte par ce navigateur';
+            btn.style.display = 'none';
+            return;
+        }
+        btn.style.display = 'inline-block';
+        var isActive = wakeLockSentinel !== null || canvasStream !== null;
+        if (wakeLockEnabled && isActive) {
+            el.classList.add('active');
+            txt.textContent = 'L ecran reste allume';
+            btn.textContent = 'Desactiver';
+        } else if (wakeLockEnabled && !isActive) {
+            el.classList.add('warn');
+            txt.textContent = 'En attente (touchez la page)';
+            btn.textContent = 'Desactiver';
+        } else {
+            txt.textContent = 'Veille automatique';
+            btn.textContent = 'Garder l ecran allume';
+        }
+    }
+
+    function toggleWakeLock() {
+        if (wakeLockEnabled) {
+            wakeLockEnabled = false;
+            deactivateWakeLock().then(function() {
+                try { localStorage.setItem(WAKE_LOCK_PREF, '0'); } catch (e) {}
+                showToast('Veille automatique reactivee', 'warn');
+                updateWakeStatus();
+            });
+        } else {
+            wakeLockEnabled = true;
+            activateWakeLock().then(function(ok) {
+                try { localStorage.setItem(WAKE_LOCK_PREF, '1'); } catch (e) {}
+                if (ok) showToast('L ecran va rester allume', 'success');
+                else showToast('Activez manuellement dans les reglages', 'warn');
+                updateWakeStatus();
+            });
+        }
+    }
+
+    document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'visible' && wakeLockEnabled) {
+            activateWakeLock().then(function() { updateWakeStatus(); });
+        }
+    });
+
+    function ensureWakeLockActive() {
+        if (!wakeLockEnabled) return Promise.resolve();
+        if (wakeLockSentinel === null && canvasStream === null) {
+            return activateWakeLock().then(function() { updateWakeStatus(); });
+        }
+        return Promise.resolve();
+    }
+
+    function loadTimingCache() {
+        try { return JSON.parse(localStorage.getItem(TIMING_CACHE_KEY) || '{}'); }
+        catch (e) { return {}; }
+    }
+    function saveTimingCache(cache) {
+        try { localStorage.setItem(TIMING_CACHE_KEY, JSON
