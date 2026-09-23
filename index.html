@@ -225,7 +225,15 @@ else if(!hasKey)b.textContent='Ajoutez votre cle API';
 else if(!hasImg)b.textContent='Ajoutez des images';
 else b.textContent='Creer '+state.images.length+' video'+(state.images.length>1?'s':'');
 }
-function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}
+
+function ensureWakeLockActive(){
+if(!wakeLockEnabled)return Promise.resolve();
+if(wakeLockSentinel===null&&canvasStream===null){
+return activateWakeLock().then(function(){updateWakeStatus();});
+}
+return Promise.resolve();
+}
+  function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}
 function log(m){try{console.log('[Nature] '+m);}catch(e){}}
 function setStatus(t){var b=document.getElementById('status-bar');var x=document.getElementById('status-text');if(!b||!x)return;if(t){b.classList.add('visible');x.textContent=t;}else b.classList.remove('visible');}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
