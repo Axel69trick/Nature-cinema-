@@ -127,7 +127,7 @@ var CREATE_INTERVAL_MIN=62000;
 var CREATE_INTERVAL_MAX=90000;
 var POLL_INTERVAL_SEC=8;
 var MAX_POLL_ATTEMPTS=100;
-var TIMING_CACHE_KEY='agnes_timing_cache_v10';
+var TIMING_CACHE_KEY='agnes_timing_cache_v11';
 var API_KEY_STORAGE='agnes_api_key';
 var WAKE_LOCK_PREF='agnes_wakelock_enabled';
 var MAX_IMAGE_SIZE=12*1024*1024;
@@ -165,6 +165,13 @@ function activateWakeLock(){var p=Promise.resolve(false);if(isWakeLockSupported(
 function deactivateWakeLock(){return releaseWakeLockAPI().then(function(){stopCanvasStream();});}
 function updateWakeStatus(){var el=document.getElementById('wake-status');var txt=document.getElementById('wake-status-text');var btn=document.getElementById('wake-toggle-btn');if(!el||!txt||!btn)return;el.classList.remove('active','warn');var c=document.getElementById('noSleepCanvas');var has=isWakeLockSupported()||(c&&c.captureStream);if(!has){el.classList.add('warn');txt.textContent='Non supporte';btn.style.display='none';return;}btn.style.display='inline-block';var act=wakeLockSentinel!==null||canvasStream!==null;if(wakeLockEnabled&&act){el.classList.add('active');txt.textContent='Ecran reste allume';btn.textContent='Desactiver';}else if(wakeLockEnabled&&!act){el.classList.add('warn');txt.textContent='En attente';btn.textContent='Desactiver';}else{txt.textContent='Veille automatique';btn.textContent='Garder l ecran allume';}}
 function toggleWakeLock(){if(wakeLockEnabled){wakeLockEnabled=false;deactivateWakeLock().then(function(){try{localStorage.setItem(WAKE_LOCK_PREF,'0');}catch(e){}showToast('Veille reactivee','warn');updateWakeStatus();});}else{wakeLockEnabled=true;activateWakeLock().then(function(ok){try{localStorage.setItem(WAKE_LOCK_PREF,'1');}catch(e){}showToast(ok?'Ecran reste allume':'Activez manuellement',ok?'success':'warn');updateWakeStatus();});}}
+function ensureWakeLockActive(){
+if(!wakeLockEnabled)return Promise.resolve();
+if(wakeLockSentinel===null&&canvasStream===null){
+return activateWakeLock().then(function(){updateWakeStatus();});
+}
+return Promise.resolve();
+}
 
 function loadTimingCache(){try{return JSON.parse(localStorage.getItem(TIMING_CACHE_KEY)||'{}');}catch(e){return{};}}
 function saveTimingCache(c){try{localStorage.setItem(TIMING_CACHE_KEY,JSON.stringify(c));}catch(e){}}
@@ -194,7 +201,7 @@ var PROMPT_PRESETS=[
 ];
 
 function buildSystemPrompt(){
-return 'Animate this exact image as the starting frame. The subject must remain IDENTICAL to the input image: same composition, same proportions, same shapes, same colors, same textures, same lighting, same atmosphere, same elements. This is a CONTINUATION of the source image, not a re imagination. Add only a subtle cinematic camera movement: slow dolly in, or very slow lateral move, or parallax depth move, or gentle orbital move, or progressive reveal of depth. Animate ONLY naturally present elements: trees and leaves move gently in the wind, grass and vegetation react subtly, water and waves have natural continuous motion, fish and sea animals move realistically, clouds drift slowly, mist and atmospheric particles evolve naturally, mountains and rocks stay stable with subtle parallax, planets can have extremely slow rotation, stars and cosmic elements have very slight motion. Do not exaggerate. Do not deform, stretch, liquefy, or transform objects. Do not introduce new objects, animals, buildings, mountains, planets, or elements. Do not change structure or identity. Avoid deformation, shape changing, appearing or disappearing elements, abrupt movements, artificial or robotic motion, flickering between frames, sudden light or color variations, AI artifacts, inconsistencies between frames. The scene must remain perfectly coherent and stable throughout. Enhance visual quality significantly: photorealistic extremely detailed rendering, fine sharp textures, precise details, excellent definition, realistic light, natural shadows, realistic reflections, credible atmospheric depth, excellent contrast management, subtle cinematic depth of field, realistic motion blur, natural volumetric light when appropriate. Result should feel like very high resolution near 4K, exceptional detail, natural photographic look. Cinematic high end aesthetic, elegant, refined, sophisticated. Impression of luxury, grandeur, visual richness, beauty, calm, immersion. Premium cinematic production feel, high end nature documentary or luxury advertising. Avoid excessive saturation, artificial or fantasy rendering unless present in the original. The image must stay natural, realistic, credible. Principle: animate the image, do not recreate it. Motion must be perfectly continuous, uniform, and slow. No sudden jumps, no cuts, no scene changes, no acceleration. Camera speed must remain constant from first to last frame. Do not introduce any new element, object, person, animal, building, plant, or detail at any moment. Do not change lighting, colors, or composition. Maintain absolute frame-to-frame consistency. The scene must look like a single unbroken shot.';
+return 'Animate this exact image as the starting frame. The subject must remain IDENTICAL to the input image: same composition, same proportions, same shapes, same colors, same textures, same lighting, same atmosphere, same elements. This is a CONTINUATION of the source image, not a re imagination. Animate ONLY naturally present elements: trees and leaves move gently in the wind, grass and vegetation react subtly, water and waves have natural continuous motion, fish and sea animals move realistically, clouds drift slowly, mist and atmospheric particles evolve naturally, mountains and rocks stay stable with subtle parallax, planets can have extremely slow rotation, stars and cosmic elements have very slight motion. Do not exaggerate. Do not deform, stretch, liquefy, or transform objects. Do not introduce new objects, animals, buildings, mountains, planets, or elements. Do not change structure or identity. Avoid deformation, shape changing, appearing or disappearing elements, abrupt movements, artificial or robotic motion, flickering between frames, sudden light or color variations, AI artifacts, inconsistencies between frames. The scene must remain perfectly coherent and stable throughout. Enhance visual quality significantly: photorealistic extremely detailed rendering, fine sharp textures, precise details, excellent definition, realistic light, natural shadows, realistic reflections, credible atmospheric depth, excellent contrast management, subtle cinematic depth of field, realistic motion blur, natural volumetric light when appropriate. Result should feel like very high resolution near 4K, exceptional detail, natural photographic look. Cinematic high end aesthetic, elegant, refined, sophisticated. Impression of luxury, grandeur, visual richness, beauty, calm, immersion. Premium cinematic production feel, high end nature documentary or luxury advertising. Avoid excessive saturation, artificial or fantasy rendering unless present in the original. The image must stay natural, realistic, credible. Principle: animate the image, do not recreate it. Motion must be perfectly continuous, uniform, and slow. No sudden jumps, no cuts, no scene changes, no acceleration. Camera speed must remain constant from first to last frame. Do not introduce any new element, object, person, animal, building, plant, or detail at any moment. Do not change lighting, colors, or composition. Maintain absolute frame-to-frame consistency. The scene must look like a single unbroken shot.';
 }
 
 function buildUserPrompt(){
@@ -218,7 +225,6 @@ else parts.push('CAMERA MOVEMENT: one single very slow and constant cinematic mo
 parts.push('Portrait orientation 9 by 16, 24 fps, no text, no subtitles, no watermarks');
 return parts.join('. ');
 }
-
 function setCookie(name,value,days){
 try{
 var d=new Date();
@@ -244,6 +250,7 @@ try{document.cookie=name+'=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;';}catc
 function getApiKey(){
 var k='';
 try{k=(localStorage.getItem(API_KEY_STORAGE)||'').trim();}catch(e){}
+if(!k)try{k=(sessionStorage.getItem(API_KEY_STORAGE)||'').trim();}catch(e){}
 if(!k)k=getCookie(API_KEY_STORAGE);
 return k;
 }
@@ -253,14 +260,20 @@ if(!input)return;
 var key=input.value.trim();
 if(!key){
 try{localStorage.removeItem(API_KEY_STORAGE);}catch(e){}
+try{sessionStorage.removeItem(API_KEY_STORAGE);}catch(e){}
 delCookie(API_KEY_STORAGE);
 updateApiPanel();showToast('Cle supprimee','warn');return;
 }
-var ok=false;
-try{localStorage.setItem(API_KEY_STORAGE,key);ok=true;}catch(e){}
+try{localStorage.setItem(API_KEY_STORAGE,key);}catch(e){}
+try{sessionStorage.setItem(API_KEY_STORAGE,key);}catch(e){}
 setCookie(API_KEY_STORAGE,key,365);
-if(ok||getCookie(API_KEY_STORAGE)){updateApiPanel();showToast('Cle API enregistree','success');input.blur();}
-else{showToast('Erreur sauvegarde','error');}
+if(getApiKey()===key){
+updateApiPanel();
+showToast('Cle API enregistree','success');
+input.blur();
+}else{
+showToast('Erreur sauvegarde','error');
+}
 }
 function updateApiPanel(){
 var panel=document.getElementById('api-panel');
@@ -269,7 +282,7 @@ var line=document.getElementById('api-status-line');
 var txt=document.getElementById('api-status-text');
 var key=getApiKey();
 if(!panel||!input||!line||!txt)return;
-if(key){panel.classList.add('ok');line.classList.add('ok');txt.textContent='Cle active : '+key.slice(0,8)+'...'+key.slice(-4);input.value=key;input.placeholder='';}
+if(key){panel.classList.add('ok');line.classList.add('ok');txt.textContent='Cle active : '+key.slice(0,8)+'...'+key.slice(-4);if(!input.value)input.value=key;}
 else{panel.classList.remove('ok');line.classList.remove('ok');txt.textContent='Aucune cle API enregistree';input.value='';input.placeholder='Collez votre cle API ici (sk-...)';}
 updateGenerateBtn();
 }
@@ -286,20 +299,13 @@ else if(!hasImg)b.textContent='Ajoutez des images';
 else b.textContent='Creer '+state.images.length+' video'+(state.images.length>1?'s':'');
 }
 
-function ensureWakeLockActive(){
-if(!wakeLockEnabled)return Promise.resolve();
-if(wakeLockSentinel===null&&canvasStream===null){
-return activateWakeLock().then(function(){updateWakeStatus();});
-}
-return Promise.resolve();
-}
-  function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}
+function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}
 function log(m){try{console.log('[Nature] '+m);}catch(e){}}
 function setStatus(t){var b=document.getElementById('status-bar');var x=document.getElementById('status-text');if(!b||!x)return;if(t){b.classList.add('visible');x.textContent=t;}else b.classList.remove('visible');}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function formatEta(sec){if(sec<60)return Math.round(sec)+'s';var m=Math.floor(sec/60);var s=Math.round(sec%60);return m+'m'+(s>0?' '+s+'s':'');}
 
-var state={images:[],isRunning:false,stopRequested:false,queue:[],completed:0,failed:0,isLoadingImages:false,durationFrames:97};
+var state={images:[],isRunning:false,stopRequested:false,queue:[],completed:0,failed:0,isLoadingImages:false,durationFrames:153};
 
 function fileToDataUri(f){return new Promise(function(res,rej){var r=new FileReader();r.onload=function(e){res(e.target.result);};r.onerror=function(){rej(new Error('read error'));};r.readAsDataURL(f);});}
 function generateThumbnail(uri){return new Promise(function(res){var img=new Image();img.onload=function(){try{var c=document.createElement('canvas');var ratio=img.height/img.width;c.width=THUMBNAIL_MAX_WIDTH;c.height=Math.round(THUMBNAIL_MAX_WIDTH*ratio);var ctx=c.getContext('2d');ctx.drawImage(img,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',0.7));}catch(e){res(uri);}};img.onerror=function(){res(uri);};img.src=uri;});}
@@ -319,13 +325,13 @@ if(res.status===429){
 if(createIntervalMs<CREATE_INTERVAL_MAX)createIntervalMs=Math.min(createIntervalMs+8000,CREATE_INTERVAL_MAX);
 var wait=[15,30,45,60,90,120,180][Math.min(n,6)];
 log(label+' 429 attente '+wait+'s');
-setStatus('Preparation IA ('+wait+'s)...');
+setStatus('API occupee ('+wait+'s)...');
 return sleep(wait*1000).then(function(){return n<maxAttempts?attempt(n+1):res;});
 }
 if(res.status===503){
 var wait=[5,10,15,20,30,45][Math.min(n,5)];
 log(label+' 503 attente '+wait+'s');
-setStatus('Preparation ('+wait+'s)...');
+setStatus('Serveur occupe ('+wait+'s)...');
 return sleep(wait*1000).then(function(){return n<maxAttempts?attempt(n+1):res;});
 }
 return res;
@@ -360,7 +366,7 @@ var remaining=Math.max(20,Math.floor(estimatedSec*0.8));
 function waitInitial(){
 if(remaining<=0)return Promise.resolve();
 if(state.stopRequested)return Promise.reject(new Error('Arret demande'));
-onProgress('Preparation... '+remaining+'s');
+onProgress('Preparation image - '+remaining+'s');
 remaining--;
 return sleep(1000).then(waitInitial);
 }
@@ -372,7 +378,7 @@ var url=POLL_BASE+'?video_id='+encodeURIComponent(videoId)+'&model_name='+encode
 return apiFetch(url,{method:'GET',headers:{'Authorization':'Bearer '+getApiKey()}},'Polling').then(function(res){return res.json();}).then(function(d){
 var status=d.status||'unknown';
 var progress=d.progress||0;
-onProgress('Creation... '+progress+'%');
+onProgress('Creation '+progress+'%');
 if(status==='completed'||status==='succeeded'||status==='done'){
 var videoUrl=(d.metadata&&d.metadata.url)||d.url||(d.output&&d.output.url);
 if(!videoUrl)throw new Error('Pas URL');
@@ -380,7 +386,7 @@ return videoUrl;
 }
 if(status==='failed'||status==='error'||status==='cancelled')throw new Error('Echec '+status);
 var r=POLL_INTERVAL_SEC;
-function tick(){if(r<=0)return Promise.resolve();if(state.stopRequested)return Promise.reject(new Error('Arret demande'));onProgress('Creation... '+r+'s');r--;return sleep(1000).then(tick);}
+function tick(){if(r<=0)return Promise.resolve();if(state.stopRequested)return Promise.reject(new Error('Arret demande'));onProgress('Verification - '+r+'s');r--;return sleep(1000).then(tick);}
 return tick().then(function(){return poll(attempt+1);});
 });
 }
@@ -394,23 +400,24 @@ if(!state.queue.length){q.style.display='none';return;}
 q.style.display='block';
 var total=state.queue.length;
 var done=state.completed+state.failed;
-var inProg=state.queue.filter(function(x){return x.status==='processing';}).length;
+var inProg=state.queue.filter(function(x){return x.status==='processing'||x.status==='creating';}).length;
 var pending=total-done-inProg;
 var estGen=estimateGenerationTime(state.durationFrames)/1000;
 var remainingCreates=pending;
-var eta=remainingCreates>0?remainingCreates*(createIntervalMs/1000)+estGen:inProg*estGen;
+var eta=remainingCreates>0?(remainingCreates*(estGen+5)):inProg*estGen;
 var html='<div class="queue-summary"><span>Progression : '+done+'/'+total+'</span><span>'+(done<total?'~ '+formatEta(eta)+' restant':'Termine')+'</span></div>';
 var visible=state.queue.slice(0,30);
 html+=visible.map(function(item){
 var icon='o',st='En attente',cls='';
-if(item.status==='creating'){icon='.';st='Preparation';cls='';}
-else if(item.status==='processing'){icon='.';st=item.progress||'En cours';cls='';}
+if(item.status==='creating'){icon='>';st='Preparation';}
+else if(item.status==='processing'){icon='>';st=item.progress||'En cours';}
 else if(item.status==='done'){icon='v';st='Termine';cls='done';}
 else if(item.status==='failed'){icon='x';st='Echec';cls='failed';}
 return '<div class="queue-item '+cls+'"><div class="q-icon">'+icon+'</div><div class="q-name">Image '+(item.imageIndex+1)+'</div><div class="q-status">'+esc(st)+'</div></div>';
 }).join('');
 q.innerHTML=html;
 }
+
 function downloadAllVideos(){
 var items=document.querySelectorAll('.gallery-item video source');
 if(!items.length){showToast('Aucune video a telecharger','warn');return;}
@@ -447,19 +454,23 @@ item.progress='Preparation';
 renderQueue();
 var prompt=buildUserPrompt();
 item.prompt=prompt;
-log('Image '+(item.imageIndex+1)+' creation');
+log('Image '+(item.imageIndex+1)+' : creation de la tache...');
 return createVideoTask(item.image.dataUri,prompt).then(function(videoId){
 item.videoId=videoId;
 item.startTime=Date.now();
 item.status='processing';
 item.progress='En cours';
 renderQueue();
+log('Image '+(item.imageIndex+1)+' : video_id = '+videoId);
 return videoId;
 });
 }
 
 function pollTaskAndDisplay(item){
-return pollVideo(item.videoId,function(p){item.progress=p;renderQueue();}).then(function(videoUrl){
+return pollVideo(item.videoId,function(p){
+item.progress=p;
+renderQueue();
+}).then(function(videoUrl){
 var elapsed=Date.now()-item.startTime;
 recordGenerationTime(state.durationFrames,elapsed);
 item.status='done';
@@ -469,9 +480,10 @@ state.completed++;
 renderQueue();
 updateGenerateBtn();
 addToGallery(videoUrl,'Image '+(item.imageIndex+1));
+log('Image '+(item.imageIndex+1)+' : TERMINE en '+(elapsed/1000).toFixed(1)+'s');
 }).catch(function(e){
 if(e.message==='Arret demande'){item.status='failed';item.progress='Arrete';}
-else{item.status='failed';item.progress='Echec';state.failed++;}
+else{item.status='failed';item.progress='Echec';state.failed++;log('Image '+(item.imageIndex+1)+' : ECHEC - '+e.message);}
 renderQueue();
 updateGenerateBtn();
 });
@@ -490,6 +502,7 @@ document.getElementById('gallery-grid').innerHTML='';
 document.getElementById('gallery').style.display='none';
 document.getElementById('stop-btn').classList.add('visible');
 document.getElementById('generate-btn').disabled=true;
+log('=== Demarrage : '+state.images.length+' video(s) ===');
 ensureWakeLockActive().then(function(){return runQueue();});
 }
 
@@ -497,36 +510,31 @@ function runQueue(){
 renderQueue();
 updateGenerateBtn();
 var totalStart=Date.now();
-var pollingTasks=[];
 function nextCreate(i){
 if(state.stopRequested||i>=state.queue.length)return Promise.resolve();
 var item=state.queue[i];
+log('--- Lancement image '+(i+1)+'/'+state.queue.length+' ---');
 return createTaskOnly(item).then(function(){
 return pollTaskAndDisplay(item);
 }).catch(function(e){
 if(e.message==='Arret demande')return;
 item.status='failed';item.progress='Echec';state.failed++;
 renderQueue();updateGenerateBtn();
+log('Image '+(i+1)+' : erreur globale - '+e.message);
 }).then(function(){
 if(i<state.queue.length-1&&!state.stopRequested){
-var waitSec=Math.ceil(createIntervalMs/1000);
-function tick(){
-if(waitSec<=0||state.stopRequested)return Promise.resolve();
-setStatus('Respiration... Image '+(i+2)+'/'+state.queue.length+' dans '+waitSec+'s');
-waitSec--;
-return sleep(1000).then(tick);
-}
-return tick();
+log('Pause courte 5s avant image '+(i+2));
+setStatus('Pause 5s avant image '+(i+2)+'/'+state.queue.length);
+return sleep(5000);
 }
 return Promise.resolve();
 }).then(function(){return nextCreate(i+1);});
 }
 return nextCreate(0).then(function(){
-return Promise.resolve();
-}).then(function(){
 var totalElapsed=(Date.now()-totalStart)/1000;
-var summary=state.stopRequested?'Arrete '+state.completed+'/'+state.queue.length:'OK '+state.completed+'/'+state.queue.length+' videos en '+formatEta(totalElapsed);
+var summary=state.stopRequested?'Arrete '+state.completed+'/'+state.queue.length:'Termine : '+state.completed+'/'+state.queue.length+' videos en '+formatEta(totalElapsed);
 setStatus(summary);
+log('=== '+summary+' ===');
 return sleep(4000);
 }).then(function(){
 setStatus(null);
