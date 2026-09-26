@@ -104,13 +104,14 @@ select{width:100%;padding:.7rem .9rem;border-radius:8px;border:1px solid #e5e5e5
 <div class="section-body"><div class="section-content">
 <div class="control-row"><label class="control-label">Duree</label><select id="duration-select"><option value="121">5 secondes</option><option value="153" selected>6,4 secondes</option><option value="241">10 secondes</option></select></div>
 <div class="control-row"><label class="control-label">Mouvement camera</label><select id="camera-select"><option value="random" selected>Aleatoire</option><option value="push">Travelling avant</option><option value="lateral">Lateral</option><option value="parallax">Parallaxe</option><option value="orbit">Orbital</option><option value="reveal">Revelation</option></select></div>
+<div class="control-row"><label class="control-label">Type de scene nature</label><select id="scene-select"><option value="auto" selected>Detection automatique</option><option value="forest">Foret et arbres</option><option value="ocean">Ocean, mer et plage</option><option value="mountain">Montagne et rochers</option><option value="space">Espace, planetes et etoiles</option><option value="river">Riviere, cascade et lac</option><option value="sky">Ciel, nuages et brume</option><option value="desert">Desert et dunes</option><option value="snow">Neige et glace</option><option value="flower">Fleurs et champs</option></select></div>
 <div class="control-row"><label class="control-label">Intensite</label><select id="intensity-select"><option value="random">Aleatoire</option><option value="subtle" selected>Subtile</option><option value="moderate">Moderee</option></select></div>
 </div></div>
 </div>
 <button type="button" class="btn-primary" id="generate-btn" disabled>Creer les videos</button>
 <button type="button" class="btn-stop" id="stop-btn">Arreter</button>
 <div class="queue" id="queue" style="display:none"></div>
-<div class="gallery" id="gallery" style="display:none"><div class="section-title" style="margin-bottom:.8rem">Videos generees</div><div class="gallery-grid" id="gallery-grid"></div></div>
+<div class="gallery" id="gallery" style="display:none"><div class="section-title" style="margin-bottom:.8rem">Videos generees</div><button type="button" class="btn-primary" id="download-all-btn" style="margin-bottom:1rem">Telecharger toutes les videos</button><div class="gallery-grid" id="gallery-grid"></div></div>
 <div class="status-bar" id="status-bar"><div class="spinner"></div><span id="status-text">Preparation</span></div>
 <div class="toast" id="toast"><span id="toast-icon">OK</span><span id="toast-text">Message</span></div>
 <canvas id="noSleepCanvas" width="2" height="2"></canvas>
@@ -171,6 +172,18 @@ function recordGenerationTime(n,d){var c=loadTimingCache();var k=String(n);if(!c
 function estimateGenerationTime(n){var c=loadTimingCache();var s=c[String(n)];if(s&&s.length>0){var sorted=s.slice().sort(function(a,b){return a-b;});var m=Math.floor(sorted.length/2);return sorted.length%2===0?(sorted[m-1]+sorted[m])/2:sorted[m];}return 30000+n*500;}
 function updateTimingDisplay(){var c=loadTimingCache();var all=[];for(var k in c)if(c.hasOwnProperty(k))all=all.concat(c[k]);var s=document.getElementById('stat-speed');var n=document.getElementById('stat-samples');if(!s||!n)return;if(all.length===0){s.textContent='en attente';n.textContent='0 generation';return;}var avg=all.reduce(function(a,b){return a+b;},0)/all.length;s.textContent=(avg/1000).toFixed(1)+' s en moyenne';n.textContent=all.length+' generation'+(all.length>1?'s':'');}
 
+var SCENE_PROMPTS={
+auto:'',
+forest:'The scene is a forest with trees, leaves, branches, and vegetation. Animate the trees and leaves moving gently in a soft natural breeze, the grass and undergrowth swaying subtly, dappled sunlight filtering through the canopy and shifting slowly as the leaves move. Any small forest details like ferns, moss, and fallen leaves should react subtly to the air movement. The camera should move slowly and smoothly through the forest depth, revealing more of the scene progressively.',
+ocean:'The scene is an ocean, sea, or beach. Animate the waves rolling naturally and continuously, the foam forming and dissolving realistically, the surface of the water reflecting light with subtle shimmer, the sand and any foam edge moving gently. If there are clouds, they drift slowly across the sky. The camera should move slowly and smoothly, following the natural flow of the water and revealing the depth of the seascape.',
+mountain:'The scene is a mountain landscape with rocks, peaks, and possibly clouds. Animate the clouds drifting slowly across the peaks, the atmospheric haze evolving naturally, the light shifting gradually across the slopes. The rocks and mountains remain perfectly stable but benefit from a subtle parallax depth effect. The camera should move very slowly and smoothly, revealing the grandeur and scale of the landscape.',
+space:'The scene is space with planets, stars, galaxies, or cosmic elements. Animate the stars with an extremely subtle twinkle and drift, the galaxies with very slow rotation, the planets with an extremely slow and realistic rotation if visible. The cosmic dust and nebulae evolve gently. The camera should move very slowly and smoothly, giving a sense of immense scale and peaceful vastness.',
+river:'The scene is a river, waterfall, or lake. Animate the water flowing naturally and continuously, the surface rippling with realistic reflections, the foam and spray moving with physical accuracy. Any vegetation on the banks sways gently in the wind. The camera should move slowly and smoothly, following the flow of the water and revealing the depth of the scene.',
+sky:'The scene is a sky with clouds, mist, or atmospheric elements. Animate the clouds drifting slowly and naturally across the sky, the mist and haze evolving gently, the light shifting subtly. The camera should move very slowly and smoothly, giving a sense of calm and immensity.',
+desert:'The scene is a desert with sand dunes. Animate the sand blowing gently in the wind, forming subtle shifting patterns on the surface of the dunes, the heat haze shimmering faintly. The dunes remain stable but benefit from subtle parallax depth. The camera should move slowly and smoothly, revealing the vastness of the desert.',
+snow:'The scene is a snowy or icy landscape. Animate the snowflakes falling gently and drifting in the wind, the surface of the snow sparkling subtly, the ice reflecting light naturally. Any clouds drift slowly. The camera should move slowly and smoothly, giving a sense of cold, calm, and purity.',
+flower:'The scene is a field of flowers or flowering plants. Animate the flowers and petals swaying gently in the breeze, the grass moving in soft waves, small pollinating insects (if present in the image) moving naturally. The light shifts subtly. The camera should move slowly and smoothly, revealing the beauty and detail of the flowers.'
+};
 var PROMPT_PRESETS=[
 {label:'Vent leger',text:'brise legere dans les feuilles'},
 {label:'Golden hour',text:'lumiere doree de fin de journee'},
@@ -189,6 +202,11 @@ var p=document.getElementById('main-prompt');
 var base=p?p.value.trim():'';
 var parts=[buildSystemPrompt()];
 if(base)parts.push('Additional direction: '+base);
+var scene=document.getElementById('scene-select');
+var sceneVal=scene?scene.value:'auto';
+if(sceneVal!=='auto'&&SCENE_PROMPTS[sceneVal]){
+parts.push('SCENE TYPE (absolute priority): '+SCENE_PROMPTS[sceneVal]);
+}
 var cam=document.getElementById('camera-select');
 var camVal=cam?cam.value:'random';
 if(camVal==='push')parts.push('CAMERA MOVEMENT (absolute priority): slow dolly in, camera glides forward smoothly toward the subject, constant slow speed');
@@ -201,14 +219,48 @@ parts.push('Portrait orientation 9 by 16, 24 fps, no text, no subtitles, no wate
 return parts.join('. ');
 }
 
-function getApiKey(){try{return (localStorage.getItem(API_KEY_STORAGE)||'').trim();}catch(e){return'';}}
+function setCookie(name,value,days){
+try{
+var d=new Date();
+d.setTime(d.getTime()+(days*24*60*60*1000));
+document.cookie=name+'='+encodeURIComponent(value)+';expires='+d.toUTCString()+';path=/;SameSite=Lax';
+}catch(e){}
+}
+function getCookie(name){
+try{
+var n=name+'=';
+var parts=document.cookie.split(';');
+for(var i=0;i<parts.length;i++){
+var c=parts[i].trim();
+if(c.indexOf(n)===0)return decodeURIComponent(c.substring(n.length));
+}
+}catch(e){}
+return'';
+}
+function delCookie(name){
+try{document.cookie=name+'=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;';}catch(e){}
+}
+
+function getApiKey(){
+var k='';
+try{k=(localStorage.getItem(API_KEY_STORAGE)||'').trim();}catch(e){}
+if(!k)k=getCookie(API_KEY_STORAGE);
+return k;
+}
 function saveApiKey(){
 var input=document.getElementById('api-key-input');
 if(!input)return;
 var key=input.value.trim();
-if(!key){try{localStorage.removeItem(API_KEY_STORAGE);}catch(e){}updateApiPanel();showToast('Cle supprimee','warn');return;}
-try{localStorage.setItem(API_KEY_STORAGE,key);updateApiPanel();showToast('Cle API enregistree','success');input.blur();}
-catch(e){showToast('Erreur sauvegarde','error');}
+if(!key){
+try{localStorage.removeItem(API_KEY_STORAGE);}catch(e){}
+delCookie(API_KEY_STORAGE);
+updateApiPanel();showToast('Cle supprimee','warn');return;
+}
+var ok=false;
+try{localStorage.setItem(API_KEY_STORAGE,key);ok=true;}catch(e){}
+setCookie(API_KEY_STORAGE,key,365);
+if(ok||getCookie(API_KEY_STORAGE)){updateApiPanel();showToast('Cle API enregistree','success');input.blur();}
+else{showToast('Erreur sauvegarde','error');}
 }
 function updateApiPanel(){
 var panel=document.getElementById('api-panel');
@@ -359,6 +411,24 @@ return '<div class="queue-item '+cls+'"><div class="q-icon">'+icon+'</div><div c
 }).join('');
 q.innerHTML=html;
 }
+function downloadAllVideos(){
+var items=document.querySelectorAll('.gallery-item video source');
+if(!items.length){showToast('Aucune video a telecharger','warn');return;}
+showToast('Telechargement de '+items.length+' video'+(items.length>1?'s':'')+'...','success');
+for(var i=0;i<items.length;i++){
+(function(idx,url){
+setTimeout(function(){
+var a=document.createElement('a');
+a.href=url;
+a.download='nature-cinema-'+(idx+1)+'.mp4';
+a.target='_blank';
+document.body.appendChild(a);
+a.click();
+document.body.removeChild(a);
+},idx*1500);
+})(i,items[i].src);
+}
+}
 
 function addToGallery(videoUrl,label){
 var g=document.getElementById('gallery');
@@ -496,6 +566,8 @@ var durationSelect=document.getElementById('duration-select');
 if(durationSelect)durationSelect.addEventListener('change',function(e){state.durationFrames=parseInt(e.target.value,10)||153;});
 var generateBtn=document.getElementById('generate-btn');
 if(generateBtn)generateBtn.addEventListener('click',startGeneration);
+var downloadAllBtn=document.getElementById('download-all-btn');
+if(downloadAllBtn)downloadAllBtn.addEventListener('click',downloadAllVideos);
 var wakeBtn=document.getElementById('wake-toggle-btn');
 if(wakeBtn)wakeBtn.addEventListener('click',toggleWakeLock);
 try{var saved=localStorage.getItem(WAKE_LOCK_PREF);wakeLockEnabled=saved==='1';}catch(e){}
