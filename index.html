@@ -502,7 +502,7 @@ function nextCreate(i){
 if(state.stopRequested||i>=state.queue.length)return Promise.resolve();
 var item=state.queue[i];
 return createTaskOnly(item).then(function(){
-pollingTasks.push(pollTaskAndDisplay(item));
+return pollTaskAndDisplay(item);
 }).catch(function(e){
 if(e.message==='Arret demande')return;
 item.status='failed';item.progress='Echec';state.failed++;
@@ -522,7 +522,7 @@ return Promise.resolve();
 }).then(function(){return nextCreate(i+1);});
 }
 return nextCreate(0).then(function(){
-if(pollingTasks.length>0){setStatus('Finalisation...');return Promise.allSettled(pollingTasks);}
+return Promise.resolve();
 }).then(function(){
 var totalElapsed=(Date.now()-totalStart)/1000;
 var summary=state.stopRequested?'Arrete '+state.completed+'/'+state.queue.length:'OK '+state.completed+'/'+state.queue.length+' videos en '+formatEta(totalElapsed);
